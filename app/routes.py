@@ -19,6 +19,7 @@ def login():
         user = db.session.query(Users).filter_by(email=email).first()
 
         if user is not None and password == user.password:
+            flash('Login Successful')
             return redirect(url_for('home'))
     return render_template('login.html', form=form)
 
