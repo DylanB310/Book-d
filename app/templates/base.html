@@ -1,0 +1,16 @@
+<html>
+<head>
+    <title>Splash Page</title>
+</head>
+<body>
+    <div>Hello</div>
+    {% block content %}
+    {% for message in get_flashed_messages() %}
+        {% if message %}
+
+        {% endif %}
+    {% endfor %}
+    {% endblock %}
+    
+</body>
+</html>
