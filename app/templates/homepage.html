@@ -6,7 +6,7 @@
 
     <!-- ms graph api call -->
     {% if config.get("ENDPOINT") %}
-      <li><a href='/graphcall'>Call Microsoft Graph API</a></li>
+      <button type="button" class="btn btn-secondary"><a href='/graphcall'>Call Microsoft Graph API</a></button>
     {% endif %}
 
     <!-- for B2C, ignore for now -->
@@ -14,7 +14,7 @@
       <li><a href='{{_build_auth_code_flow(authority=config["B2C_PROFILE_AUTHORITY"])["auth_uri"]}}'>Edit Profile</a></li>
     {% endif %} -->
 
-    <li><a href="/logout">Logout</a></li>
+    <button type="button" class="btn btn-secondary"><a href="/logout">Logout</a></button>
     <hr>
     <footer style="text-align: right">Powered by MSAL Python {{ version }}</footer>
 
