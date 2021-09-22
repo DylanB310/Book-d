@@ -1,7 +1,5 @@
 * {
-    display: flex;
     box-sizing: border-box;
-    padding: 0 0;
 }
 
 a{
@@ -9,9 +7,3 @@ a{
     text-decoration: none;
 }
 
-body{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgb(red, green, rgb(68, 68, 68));
-}

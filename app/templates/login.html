@@ -6,8 +6,8 @@
         <h1>Book'd</h1>      
         <p>A Controlled Digital Lending Application</p>
     </div>
-    
-    <button type="button" id="mainbtn" class="btn btn-success"><a href='{{ auth_url }}'>Sign In</a></button>
+
+    <button type="button" id="mainbtn" class="btn btn-success"><a href='{{ auth_url }}'>Sign-in with Microsoft</a></button>
 
     {% if config.get("B2C_RESET_PASSWORD_AUTHORITY") %}
     <li><a href='{{_build_auth_code_flow(authority=config["B2C_RESET_PASSWORD_AUTHORITY"])["auth_uri"]}}'>Reset Password</a></li>
