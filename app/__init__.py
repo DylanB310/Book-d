@@ -2,10 +2,11 @@ from flask import Flask
 
 # New imports
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_session import Session
 from dotenv import load_dotenv
 import os
 import urllib
+from app import app_config
 
 # force loading of environment variables
 load_dotenv('.flaskenv')
@@ -27,6 +28,9 @@ dbstr = "mssql+pyodbc:///?odbc_connect=%s" % dbstr
 
 # start app, secret key can be changed later
 app = Flask(__name__)
+app.config.from_object(app_config)
+Session(app)
+
 app.config['SECRET_KEY'] = 'capstone'
 
 # Add DB config
@@ -46,11 +50,6 @@ app.config.update(
 
 # Create database connection and associate it with the Flask application
 db = SQLAlchemy(app)
-
-# login = LoginManager(app)
-
-# enables @login_required
-# login.login_view = 'login'
 
 from app import routes, models
 from app.models import Users
