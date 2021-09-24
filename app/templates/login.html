@@ -2,18 +2,27 @@
 {%extends "base.html" %}
 
 {%block content%}
-    <div id="main-title" class="jumbotron">
-        <h1>Book'd</h1>      
-        <p>A Controlled Digital Lending Application</p>
+    <div class="container">
+        <div class="d-flex justify-content-center h-100">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Welcome to Book'd</h3>
+                </div>
+                <div class="card-body">
+                    <button type="button" id="mainbtn" class="btn btn-success"><a href='{{ auth_url }}'>Sign-in with Microsoft</a></button>
+                    <div>
+                        <hr>
+                        <footer id="mainfooter">Powered by MSAL Python {{ version }}</footer>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <button type="button" id="mainbtn" class="btn btn-success"><a href='{{ auth_url }}'>Sign-in with Microsoft</a></button>
-
+    
     {% if config.get("B2C_RESET_PASSWORD_AUTHORITY") %}
     <li><a href='{{_build_auth_code_flow(authority=config["B2C_RESET_PASSWORD_AUTHORITY"])["auth_uri"]}}'>Reset Password</a></li>
     {% endif %}
 
-    <hr>
-    <footer style="text-align: right">Powered by MSAL Python {{ version }}</footer>
-	</div>
+
 {% endblock %}

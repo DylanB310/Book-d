@@ -7,3 +7,53 @@ a{
     text-decoration: none;
 }
 
+a:hover{
+    color: white;
+}
+
+html,body{
+    background-image: url("imgs/library.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    height: 100%;
+    font-family: 'Numans', sans-serif;
+    }
+    
+    .container{
+    height: 100%;
+    position: relative;
+    }
+
+    .card-body {
+        margin: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+      }
+    
+    .card{
+    height: 370px;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 400px;
+    background-color: rgba(0,0,0, 0.7) !important;
+    }
+    
+    .card-header h3{
+    color: white;
+    text-align: center;
+    }
+    
+    #mainbtn{
+    color: black;
+    background-color: #1249ff;
+    width: 200px;
+    padding: 15px;
+    font-size: medium;
+    }
+
+    #mainfooter{
+    color: white;
+    }
