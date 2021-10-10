@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+    <h1>THIS IS MEDIA</h1>
+    {% for container in container_list %}
+        {{ container.name }}<br>
+    {% endfor %}
+    {% for blob in blob_list %}
+        {{ blob }}<br>
+    {% endfor %}
+{% endblock %}

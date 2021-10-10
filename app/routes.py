@@ -1,8 +1,12 @@
+from azure.storage import blob
 from werkzeug.utils import redirect
 from app import app, db
 from flask import render_template, url_for, request, session, flash, redirect
 import msal
-import uuid
+import copy
+import os, uuid
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
+
 import requests
 from app import app_config
 
@@ -12,7 +16,6 @@ from app import app_config
 # See also https://flask.palletsprojects.com/en/1.0.x/deploying/wsgi-standalone/#proxy-setups
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
 
 @app.route("/")
 def index():
@@ -26,7 +29,10 @@ def login():
     # Technically we could use empty list [] as scopes to do just sign in,
     # here we choose to also collect end user consent upfront
     session["flow"] = _build_auth_code_flow(scopes=app_config.SCOPE)
-    return render_template("login.html", auth_url=session["flow"]["auth_uri"], version=msal.__version__)
+    if session.get("user"):
+        return redirect(url_for("index"))
+    else:
+        return render_template("login.html", auth_url=session["flow"]["auth_uri"], version=msal.__version__)
 
 @app.route(app_config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
@@ -59,6 +65,28 @@ def graphcall():
         headers={'Authorization': 'Bearer ' + token['access_token']},
         ).json()
     return render_template('display.html', result=graph_data)
+
+@app.route("/media")
+def mediacall():
+    # require user-login
+    token = _get_token_from_cache(app_config.SCOPE)
+    if not token:
+        return redirect(url_for("login"))
+    else:
+        # establish connection with blobs and containers
+        blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+
+        # list all the containers in our resource
+        all_containers=blob_service_client.list_containers(include_metadata=True)
+        temp_c=copy.copy(all_containers) # deep copy of all containers
+        temp_b=[]
+
+        for container in all_containers:
+            container_client = blob_service_client.get_container_client(container.name)
+            blob_list=container_client.list_blobs()
+            temp_b.append(blob_list)
+
+        return render_template('media.html', container_list=temp_c, blob_list=temp_b)
 
 
 def _load_cache():

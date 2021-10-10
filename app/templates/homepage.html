@@ -1,5 +1,6 @@
 {%extends "base.html"%}
 
+
 {%block content%}
 <body>
     <h2>Welcome {{ user.get("name") }}!</h2>
@@ -13,8 +14,6 @@
     <!-- {% if config.get("B2C_PROFILE_AUTHORITY") %}
       <li><a href='{{_build_auth_code_flow(authority=config["B2C_PROFILE_AUTHORITY"])["auth_uri"]}}'>Edit Profile</a></li>
     {% endif %} -->
-
-    <button type="button" class="btn btn-secondary"><a href="/logout">Logout</a></button>
     <hr>
     <footer style="text-align: right">Powered by MSAL Python {{ version }}</footer>
 
