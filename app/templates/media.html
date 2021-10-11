@@ -3,9 +3,11 @@
 
 {% block content %}
     <h1>THIS IS MEDIA</h1>
-    {% for container in container_list %}
-        {{ container.name }}<br>
-    {% endfor %}
+    <ul id="media-list">
+        {% for container in container_list %}
+            <li><a href="/rentals/{{ container.name }}">{{ container.name }}</a></li>
+        {% endfor %}
+    </ul>
     {% for blob in blob_list %}
         {{ blob }}<br>
     {% endfor %}
