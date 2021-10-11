@@ -1,5 +1,9 @@
 import os
 
+ACCOUNT_NAME = 'bookdmedia'
+
+ACCOUNT_KEY = 'JJ3Uf/b6KjT9KFS9IC047O/2YJoNeRqbhnhqem6TiN/nfcrbuoFOH0vXGV0mODDhtEA/ipUwEiO+jJx/q3ABSw=='
+
 CLIENT_ID = "0faf51c7-3f3d-4904-acc3-b158ed7c89de" # Application (client) ID of app registration
 
 CLIENT_SECRET = "7_x_HcsLbpnVkZp13q68f7-1Ax7~eT_v4t" # Placeholder - for use ONLY during testing.

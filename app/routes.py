@@ -1,8 +1,13 @@
+from azure.storage import blob
 from werkzeug.utils import redirect
 from app import app, db
 from flask import render_template, url_for, request, session, flash, redirect
 import msal
-import uuid
+import copy
+import os, uuid
+from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__, BlobPrefix, generate_container_sas, ContainerSasPermissions
+
 import requests
 from app import app_config
 
@@ -12,7 +17,6 @@ from app import app_config
 # See also https://flask.palletsprojects.com/en/1.0.x/deploying/wsgi-standalone/#proxy-setups
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
 
 @app.route("/")
 def index():
@@ -26,7 +30,10 @@ def login():
     # Technically we could use empty list [] as scopes to do just sign in,
     # here we choose to also collect end user consent upfront
     session["flow"] = _build_auth_code_flow(scopes=app_config.SCOPE)
-    return render_template("login.html", auth_url=session["flow"]["auth_uri"], version=msal.__version__)
+    if session.get("user"):
+        return redirect(url_for("index"))
+    else:
+        return render_template("login.html", auth_url=session["flow"]["auth_uri"], version=msal.__version__)
 
 @app.route(app_config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
@@ -60,6 +67,60 @@ def graphcall():
         ).json()
     return render_template('display.html', result=graph_data)
 
+@app.route("/media")
+def mediacall():
+    # require user-login
+    token = _get_token_from_cache(app_config.SCOPE)
+    if not token:
+        return redirect(url_for("login"))
+    else:
+        # establish connection with blobs and containers
+        blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+
+        # list all the containers in our resource
+        all_containers=blob_service_client.list_containers(include_metadata=True)
+        containers=copy.copy(all_containers)
+
+        # loop through containers including blobs
+        # for container in all_containers:
+        #     container_client = ContainerClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING, container_name=container.name)
+        #     temp=container_client.list_blobs()
+        #     for blob in temp:
+        #         blob_list.append(blob)
+        return render_template('media.html', container_list=containers, blob_list=[])
+
+@app.route("/rentals/<rental_name>", methods=['GET', 'POST'])
+def my_rentals(rental_name):
+    # require user-login
+    token = _get_token_from_cache(app_config.SCOPE)
+    if not token:
+        return redirect(url_for("login"))
+    else:
+        # establish clients to handle the containers and blobs
+        blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+        container_client = blob_service_client.get_container_client(rental_name)
+
+        # hard-coded blob for proof of concept 
+        # eventually a name_starts_
+        blob_client = container_client.get_blob_client('Computer Systems_ Digital Desig - Ata Elahi.pdf')
+        download_stream = blob_client.download_blob()
+        blob_contents = download_stream.readall()
+
+        url_sas_token = get_url_with_container_sas_token(rental_name, 'Computer Systems_ Digital Desig - Ata Elahi.pdf')
+
+        return render_template('rentals.html', pdf_url=url_sas_token)
+
+# using generate_container_sas
+def get_url_with_container_sas_token(container_name, blob_name):
+    container_sas_token = generate_container_sas(
+        account_name=app_config.ACCOUNT_NAME,
+        container_name=container_name,
+        account_key=app_config.ACCOUNT_KEY,
+        permission=ContainerSasPermissions(read=True),
+        expiry=datetime.utcnow() + timedelta(hours=1)
+    )
+    blob_url_with_container_sas_token = f"https://{app_config.ACCOUNT_NAME}.blob.core.windows.net/{container_name}/{blob_name}?{container_sas_token}"
+    return blob_url_with_container_sas_token
 
 def _load_cache():
     cache = msal.SerializableTokenCache()
