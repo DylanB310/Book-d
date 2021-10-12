@@ -21,8 +21,9 @@ class Rentals(db.Model):
     rental_id = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
     rental_name = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(128), nullable=False)
-    date_rented = db.Column(db.Date, nullable=False)
-    date_returned = db.Column(db.Date, nullable=False)
+    date_rented = db.Column(db.DateTime, nullable=False)
+    date_returned = db.Column(db.DateTime, nullable=False)
+    checked_in = db.Column(db.Boolean, nullable=False)
 
     def __repr__(self): 
-        return self.rental_id
+        return self.rental_name
