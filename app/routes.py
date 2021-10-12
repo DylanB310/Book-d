@@ -116,6 +116,7 @@ def mediacall():
 transition page for user renting media
 function: checks copies for availability then deduct copies if available
 allows users to rent copies, copies are stored in metadata
+rental also committed to rental log in SQL DB
 '''
 @app.route("/rental_auth/<container>/<blob>")
 def rental_auth(container, blob):
