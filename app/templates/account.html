@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>{{ user.get("name") }}'s Profile</h1>
+
+    <h1>My rentals</h1>
+    <ul>
+        {% for rental in myRentals %}
+        <li>
+            {{ rental.name }}
+            <button type="button"><a href="/rentals/{{ rental.container }}/{{ rental.name }}">View</a></button>
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
