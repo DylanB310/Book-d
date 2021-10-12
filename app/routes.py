@@ -1,7 +1,9 @@
+from time import gmtime
 from azure.storage import blob
 from werkzeug.utils import redirect
 from app import app, db
 from flask import render_template, url_for, request, session, flash, redirect
+from app.models import Users, Rentals
 import msal
 import copy
 import os, uuid
@@ -56,6 +58,9 @@ def logout():
         app_config.AUTHORITY + "/oauth2/v2.0/logout" +
         "?post_logout_redirect_uri=" + url_for("index", _external=True))
 
+'''
+API call for MS graph
+'''
 @app.route("/graphcall")
 def graphcall():
     token = _get_token_from_cache(app_config.SCOPE)
@@ -67,6 +72,10 @@ def graphcall():
         ).json()
     return render_template('display.html', result=graph_data)
 
+'''
+Media page for current blobs on storage
+Function: Update copies available on blobs, 
+'''
 @app.route("/media")
 def mediacall():
     # require user-login
@@ -76,19 +85,67 @@ def mediacall():
     else:
         # establish connection with blobs and containers
         blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+        
+        # check db for "due" books currently in db
+        check_due = db.session.query(Rentals).filter(Rentals.date_returned<datetime.now())
 
         # list all the containers in our resource
         all_containers=blob_service_client.list_containers(include_metadata=True)
         containers=copy.copy(all_containers)
+        blob_list=[]
 
-        # loop through containers including blobs
-        # for container in all_containers:
-        #     container_client = ContainerClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING, container_name=container.name)
-        #     temp=container_client.list_blobs()
-        #     for blob in temp:
-        #         blob_list.append(blob)
-        return render_template('media.html', container_list=containers, blob_list=[])
+        # loop through containers to list all available blobs
+        for container in all_containers:
+            container_client = ContainerClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING, container_name=container.name)
+            temp=container_client.list_blobs()
+            # if any media is tagged "due", update the metadata
+            for blob in temp:
+                blob_client = blob_service_client.get_blob_client(container=container, blob=blob)
+                properties = blob_client.get_blob_properties()
+                # check if rental is currently due and check-it-in
+                if properties.name in check_due:
+                    copy_num = int(properties.metadata['copies'])
+                    copy_num += 1
+                    blob_client.set_blob_metadata(metadata={'copies': str(copy_num)})
+                print(properties.metadata['copies'])
+                blob_list.append(blob)
+        return render_template('media.html', container_list=containers, blob_list=blob_list)
 
+
+'''
+transition page for user renting media
+function: checks copies for availability then deduct copies if available
+allows users to rent copies, copies are stored in metadata
+'''
+@app.route("/rental_auth/<container>/<blob>")
+def rental_auth(container, blob):
+    # establish BSC
+    blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+
+    # client for specific blob handling
+    blob_client = blob_service_client.get_blob_client(container=container, blob=blob)
+
+    # setting metadata for copies available
+    # blob_client.set_blob_metadata(metadata={'copies': '2'})
+    properties = blob_client.get_blob_properties()
+    copy_num = int(properties.metadata['copies'])
+
+    # TODO NEEDS FIXING, NEED TO CHECK IF THE USER IS CURRENTLY RENTING
+    # if there are any copies available
+    if copy_num > 0:
+        copy_num-=1
+        blob_client.set_blob_metadata(metadata={'copies': str(copy_num)}) # set metadata
+        temp = Rentals(rental_name=properties.name, email=session["user"]["preferred_username"], 
+            date_rented=datetime.now(), date_returned=(datetime.now()+timedelta(days=1)))
+        db.session.add(temp)
+        db.session.commit() # commit to rentals table
+    return render_template('rental_auth.html', blob=properties.name)
+
+
+'''
+future page for my rentals
+# TODO INACCESSIBLE    NEEDS ROUTING FROM PROFILE RENTAL SECTION
+'''
 @app.route("/rentals/<rental_name>", methods=['GET', 'POST'])
 def my_rentals(rental_name):
     # require user-login
@@ -101,10 +158,9 @@ def my_rentals(rental_name):
         container_client = blob_service_client.get_container_client(rental_name)
 
         # hard-coded blob for proof of concept 
-        # eventually a name_starts_
-        blob_client = container_client.get_blob_client('Computer Systems_ Digital Desig - Ata Elahi.pdf')
-        download_stream = blob_client.download_blob()
-        blob_contents = download_stream.readall()
+        # blob_client = container_client.get_blob_client('Computer Systems_ Digital Desig - Ata Elahi.pdf')
+        # download_stream = blob_client.download_blob()
+        # blob_contents = download_stream.readall()
 
         url_sas_token = get_url_with_container_sas_token(rental_name, 'Computer Systems_ Digital Desig - Ata Elahi.pdf')
 
