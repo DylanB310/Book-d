@@ -1,10 +1,13 @@
 from time import gmtime
 from azure.storage import blob
+from azure.storage.blob._shared.models import ResourceTypes
 from werkzeug.utils import redirect
 from app import app, db
 from flask import render_template, url_for, request, session, flash, redirect
-from app.models import Users, Rentals
+from app.models import Users, Rentals, Media
+from app.forms import AddMediaForm
 import msal
+import logging
 import copy
 import os, uuid
 from datetime import date, datetime, timedelta
@@ -99,7 +102,13 @@ def mediacall():
         username = session["user"]["preferred_username"].split("@")[0]
 
         blob_list = update_media()
-        return render_template('media.html', blob_list=blob_list, username=username)
+        my_blob_props = []
+        for blob in blob_list:
+            blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+            blob_client = blob_service_client.get_blob_client(container=blob.container, blob=blob)
+            props = blob_client.get_blob_properties()
+            my_blob_props.append(props)
+        return render_template('media.html', blob_list=my_blob_props, username=username)
 
 
 '''
@@ -125,15 +134,25 @@ def rental_auth(container, blob):
 
     # check if media currently rented by user
     currently_rented = db.session.query(Rentals).filter(
-        Rentals.rental_name == properties.name, 
+        Rentals.media_id == properties.metadata['media_id'], 
         Rentals.email==session["user"]["preferred_username"], 
         Rentals.checked_in==0).all()
 
     # if there are any copies available and user does not currently have it rented, rent it
     if not currently_rented and copies > 0:
         copies -= 1
-        blob_client.set_blob_metadata(metadata={'copies': str(copies)})
-        temp = Rentals(rental_name=properties.name, email=session["user"]["preferred_username"],
+        properties.metadata['copies'] = str(copies)
+        blob_client.set_blob_metadata(metadata={
+            'media_id': properties.metadata['media_id'],
+            'copies': str(copies),
+            'title': properties.metadata['title'],
+            'author': properties.metadata['author'],
+            'category': properties.metadata['category'],
+            'department': properties.metadata['department'],
+            'professor': properties.metadata['professor'],
+            'media_type': properties.metadata['media_type']
+            })
+        temp = Rentals(media_id=properties.metadata['media_id'], email=session["user"]["preferred_username"],
             date_rented=datetime.now(), date_returned=datetime.now()+timedelta(minutes=5), checked_in=0)
         db.session.add(temp)
         db.session.commit()
@@ -149,8 +168,8 @@ def rental_auth(container, blob):
 '''
 Function: Page for rentals
 '''
-@app.route("/rentals/<rental_container>/<rental_name>", methods=['GET', 'POST'])
-def my_rentals(rental_container, rental_name):
+@app.route("/rentals/<rental_container>/<blob_name>", methods=['GET', 'POST'])
+def my_rentals(rental_container, blob_name):
     # require user-login
     token = _get_token_from_cache(app_config.SCOPE)
     if not token:
@@ -159,7 +178,7 @@ def my_rentals(rental_container, rental_name):
         username = session["user"]["preferred_username"].split("@")[0]
 
         # run update 
-        blob_list = update_media()
+        update_media()
 
         # get current rentals of the user
         currently_rented = db.session.query(Rentals).filter(
@@ -167,17 +186,24 @@ def my_rentals(rental_container, rental_name):
             Rentals.checked_in==0).all()
         temp_rentals = []
 
+        # establish BSC
+        blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+
+        # client for specific blob handling (the media we select on results page)
+        blob_client = blob_service_client.get_blob_client(container=rental_container, blob=blob_name)
+
+        # setting metadata for copies available
+        props = blob_client.get_blob_properties()
+
         # restrict only those who have it rented
         for rental in currently_rented:
-            print(str(rental))
-            print(rental_name)
-            if str(rental_name) == str(rental):
-                temp_rentals += rental_name
+            if int(props.metadata['media_id']) == rental.media_id:
+                temp_rentals += blob_name
 
         if temp_rentals:
             # generate url token to render pdf
             # TODO RESTRICT DOWNLOAD CAPABILITIES
-            url_sas_token = get_url_with_container_sas_token(rental_container, rental_name)
+            url_sas_token = get_url_with_container_sas_token(rental_container, blob_name)
 
             return render_template('rentals.html', pdf_url=url_sas_token, username=username)
         else:
@@ -202,17 +228,91 @@ def account():
 
         # get current rentals
         currently_rented = db.session.query(Rentals).filter(
-            Rentals.email==session["user"]["preferred_username"], 
-            Rentals.checked_in==0).all()
+            Rentals.email == session["user"]["preferred_username"],
+            Rentals.checked_in == 0).all()
 
         # use current rentals of user to grab appropriate blob
         for blob in blob_list:
             for rental in currently_rented:
-                if str(blob.name) == str(rental):
-                    myRentals.append(blob)
+                # establish BSC
+                blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
 
-        return render_template("account.html", username=username, user=session["user"], currently_rented=currently_rented, myRentals=myRentals)
+                # client for specific blob handling (the media we select on results page)
+                blob_client = blob_service_client.get_blob_client(container=blob.container, blob=blob.name)
 
+                # setting metadata for copies available
+                props = blob_client.get_blob_properties()
+                if int(props.metadata['media_id']) == rental.media_id:
+                    myRentals.append(props)
+
+        return render_template("account.html", username=username, user=session["user"], myRentals=myRentals)
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_page():
+    # require user login
+    token = _get_token_from_cache(app_config.SCOPE)
+    if not token:
+        return redirect(url_for("login"))
+
+    # check if user is admin
+    is_admin = db.session.query(Users).filter(
+        Users.email == session["user"]["preferred_username"],
+        Users.role == 'admin'
+    )
+    if is_admin:
+        username = session["user"]["preferred_username"].split("@")[0]
+        form = AddMediaForm()
+
+        if form.validate_on_submit():
+            # check if exist by cross-ref sql db
+            check_media = db.session.query(Media).filter(Media.title==form.title.data).first()
+            if check_media:
+                flash('Media exists already.')
+                return redirect(url_for("admin_page"))
+
+            # add media to blobs
+            # - create a container then add blob
+            blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
+
+            temp_con_str = str(uuid.uuid4())
+            container_client = blob_service_client.get_container_client(temp_con_str)
+            container_client.create_container()
+
+            temp_blob_str = str(uuid.uuid4())
+            blob_client = container_client.upload_blob(temp_blob_str, data=form.upload.data)
+            blob_client = blob_service_client.get_blob_client(container=temp_con_str, blob=temp_blob_str)
+
+            # add media to sql db
+            temp_media = Media(
+                media_key = temp_blob_str,
+                title = form.title.data,
+                author = form.author.data,
+                category = form.category.data,
+                professor = form.professor.data,
+                department = form.department.data
+            )
+            db.session.add(temp_media)
+            db.session.commit()
+            
+            # add blob metadata
+            blob_client.set_blob_metadata(metadata={
+                'media_id': str(temp_media.media_id),
+                'copies': str(form.copies.data),
+                'title': form.title.data,
+                'author': form.author.data,
+                'category': form.category.data,
+                'department': form.department.data,
+                'professor': form.professor.data,
+                'media_type': form.media_type.data
+            })
+
+
+            flash('Media uploaded successfully')
+            return render_template("admin.html", form=form, username=username)
+        return render_template("admin.html", form=form, username=username)
+    else:
+        flash('You are not an admin.')
+        return redirect(url_for("mediacall"))
 
 '''
 Function updates any media that is overdue by 
@@ -226,39 +326,44 @@ def update_media():
     # due - date_returned is before the current time and hasn't been checked in
     check_due = db.session.query(Rentals).filter(Rentals.date_returned < datetime.now(), Rentals.checked_in == 0).all()
 
-    # list all the containers in our resource
-    all_containers=blob_service_client.list_containers(include_metadata=True)
-    blob_list = []
+    # check-in due books
+    # - list all blobs
+    # - match against currently due
+    # - update copies in metadata
+    # - update checked_in in rentals
+    containers = blob_service_client.list_containers()
+    my_blobs = []
 
-    # loop through containers to list all available blobs
-    for container in all_containers:
-        container_client = ContainerClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING, container_name=container.name)
-        temp=container_client.list_blobs()
-        # loop through blobs in container
-        for blob in temp:
-            blob_client = blob_service_client.get_blob_client(container=container, blob=blob)
-            properties = blob_client.get_blob_properties()
+    for container in containers:
+        container_client = blob_service_client.get_container_client(container=container)
+        blob_list = container_client.list_blobs()
 
-            # loop through due and see if any rendered blobs need to be checked-in
+        for blob in blob_list:
+            blob_client = container_client.get_blob_client(blob=blob)
+            props = blob_client.get_blob_properties()
             for item in check_due:
-                if properties.name == item.rental_name:
-
-                    # update copies and check-in media
-                    copies = int(properties.metadata['copies'])
+                # check blob against due
+                if item.media_id == int(props.metadata['media_id']):
+                    copies = int(props.metadata['copies'])
                     copies += 1
-                    blob_client.set_blob_metadata(metadata={'copies': str(copies)})
+                    # metadata updated
+                    blob_client.set_blob_metadata(metadata={
+                        'media_id': props.metadata['media_id'],
+                        'copies': str(copies),
+                        'title': props.metadata['title'],
+                        'author': props.metadata['author'],
+                        'category': props.metadata['category'],
+                        'department': props.metadata['department'],
+                        'professor': props.metadata['professor'],
+                        'media_type': props.metadata['media_type']
+                    })
 
-                    # update SQL DB 
-                    my_rental = db.session.query(Rentals).filter(
-                        Rentals.rental_name==properties.name, 
-                        Rentals.date_returned < datetime.now(),
-                        Rentals.checked_in==0
-                        ).first()
-                    my_rental.checked_in = 1
-                    db.session.add(my_rental)
+                    # now check-in the rental
+                    item.checked_in = 1
+                    db.session.add(item)
                     db.session.commit()
-            blob_list.append(blob)
-    return blob_list
+            my_blobs.append(blob)
+    return my_blobs
 
 # using generate_container_sas
 def get_url_with_container_sas_token(container_name, blob_name):
