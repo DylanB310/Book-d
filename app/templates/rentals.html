@@ -18,7 +18,9 @@
     <canvas oncontextmenu="return false" id="pdf-example"></canvas>
 
     <script type="text/javascript">
-        const url = "{{ pdf_url }}"
+        let url = '{{ pdf_url }}';
+        url = url.split("&amp;").join("&");
+        console.log(url);
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
