@@ -6,7 +6,7 @@
     <ul id="media-list">
         {% for blob in blob_list %}
         <li>
-            {{ blob.name }}
+            {{ blob.metadata['title'] }} by {{ blob.metadata['author'] }} [Available Copies: {{ blob.metadata['copies'] }}]
             <button type="button"><a href="/rental_auth/{{ blob.container }}/{{ blob.name }}">Rent</a></button>
         </li>
         {% endfor %}

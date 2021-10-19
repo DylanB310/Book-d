@@ -3,5 +3,107 @@
 {% block content %}
     <h1>My Rentals</h1>
     <!-- <div>{{ blob_contents }}</div> -->
-    <iframe src="{{ pdf_url }}" frameborder="0" width="90%" height="90%"></iframe>
+    <!-- <iframe src="{{ pdf_url }}" frameborder="0" width="90%" height="90%"></iframe> -->
+
+    <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+
+    <div>
+        <button id="prev">Previous page</button>
+
+        <button id="next">Next page</button>
+
+        <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
+    </div>
+
+    <canvas oncontextmenu="return false" id="pdf-example"></canvas>
+
+    <script type="text/javascript">
+        let url = '{{ pdf_url }}';
+        url = url.split("&amp;").join("&");
+        console.log(url);
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+
+        let pdfDoc = null,
+            pageNum = 1,
+            pageRendering = false,
+            pageNumPending = null,
+            scale = 1.5,
+            canvas = document.getElementById('pdf-example'),
+            ctx = canvas.getContext('2d');
+
+
+        function renderPage(num) {
+        pageRendering = true;
+
+        pdfDoc.getPage(num).then(function(page) {
+            let viewport = page.getViewport({scale: scale});
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            let renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+            };
+            let renderTask = page.render(renderContext);
+
+            renderTask.promise.then(function() {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+            });
+        });
+
+        document.getElementById('page_num').textContent = num;
+        }
+
+
+        function queueRenderPage(num) {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+        }
+
+        /**
+        * show previous page
+        */
+        function onPrevPage() {
+        if (pageNum > 1) {
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+        }
+
+        document.getElementById('prev').addEventListener('click', onPrevPage);
+
+        /**
+        * show next page
+        */
+        function onNextPage() {
+        if (pageNum < pdfDoc.numPages) {
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+        }
+
+        document.getElementById('next').addEventListener('click', onNextPage);
+
+        /**
+        * PDF async "download".
+        */
+        pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+        //Set loaded PDF to main pdfDoc variable
+        pdfDoc = pdfDoc_;
+
+        //Show number of pages in document
+        document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+        renderPage(pageNum);
+        });
+    </script>
 {% endblock %}

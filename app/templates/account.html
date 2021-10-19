@@ -7,7 +7,7 @@
     <ul>
         {% for rental in myRentals %}
         <li>
-            {{ rental.name }}
+            {{ rental.metadata['title'] }}
             <button type="button"><a href="/rentals/{{ rental.container }}/{{ rental.name }}">View</a></button>
         </li>
         {% endfor %}
