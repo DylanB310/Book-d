@@ -2,20 +2,27 @@
 
 
 {%block content%}
-<body>
-    <h2>Welcome {{ user.get("name") }}!</h2>
+<body id="body1">
+  
+  <div class="card1 bg-dark text-light">
+    <div class="card-body1">
+      <h2>Welcome: {{ user.get("name") }}!</h2>
 
-    <!-- ms graph api call -->
-    {% if config.get("ENDPOINT") %}
-      <button type="button" class="btn btn-secondary"><a href='/graphcall'>Call Microsoft Graph API</a></button>
-    {% endif %}
-
-    <!-- for B2C, ignore for now -->
-    <!-- {% if config.get("B2C_PROFILE_AUTHORITY") %}
-      <li><a href='{{_build_auth_code_flow(authority=config["B2C_PROFILE_AUTHORITY"])["auth_uri"]}}'>Edit Profile</a></li>
-    {% endif %} -->
-    <hr>
-    <footer style="text-align: right">Powered by MSAL Python {{ version }}</footer>
+            <!-- ms graph api call -->
+            {% if config.get("ENDPOINT") %}
+              <button type="button" class="btn btn-primary" style="justify-content: center;"><a href='/graphcall'>Call Microsoft Graph API</a></button>
+            {% endif %}
+            <!-- for B2C, ignore for now -->
+            <!-- {% if config.get("B2C_PROFILE_AUTHORITY") %}
+              <li><a href='{{_build_auth_code_flow(authority=config["B2C_PROFILE_AUTHORITY"])["auth_uri"]}}'>Edit Profile</a></li>
+            {% endif %} -->
+    </div>
+  </div>
+          
+            
+      
+    <hr >
+    <footer class="footer" style="text-align: right">Powered by MSAL Python {{ version }}</footer>
 
 </body>
 </html>

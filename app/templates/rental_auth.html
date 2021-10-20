@@ -1,9 +1,11 @@
-{% extends "base.html" %}
-
-{% block content %}
-    {% if success == 1 %}
-        <h1>RENTAL HAS BEEN AUTHORIZED</h1>
-    {% else %}
-        <h2>RENTAL IS CURRENTLY UNAVAILABLE OR ALREADY RENTED BY YOU</h2>
-    {% endif %}
-{% endblock %}
+{% extends "base.html" %} {% block content %} {% if success == 1 %}
+<body id="body1">
+  <div class="card1 bg-dark text-light">
+    <div class="card-body1">
+      <h1>RENTAL HAS BEEN AUTHORIZED</h1>
+      {% else %}
+      <h2>RENTAL IS CURRENTLY UNAVAILABLE OR ALREADY RENTED BY YOU</h2>
+      {% endif %} {% endblock %}
+    </div>
+  </div>
+</body>

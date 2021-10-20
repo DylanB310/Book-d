@@ -1,59 +1,91 @@
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-a{
-    color: linen;
-    text-decoration: none;
+a {
+  color: linen;
+  text-decoration: none;
 }
 
-a:hover{
-    color: white;
+a:hover {
+  color: white;
 }
 
-html,body{
-    background-image: url("imgs/library.jpg");
-    background-size: cover;
-    background-repeat: no-repeat;
-    height: 100%;
-    font-family: 'Numans', sans-serif;
-    }
-    
-    .container{
-    height: 100%;
-    position: relative;
-    }
+html,
+body.home {
+  background-image: url("imgs/library.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: 100%;
+  font-family: "Numans", sans-serif;
+  padding-top: 40;
+}
 
-    .card-body {
-        margin: 0;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        -ms-transform: translate(-50%, -50%);
-        transform: translate(-50%, -50%);
-      }
-    
-    .card{
-    height: 370px;
-    margin-top: auto;
-    margin-bottom: auto;
-    width: 400px;
-    background-color: rgba(0,0,0, 0.7) !important;
-    }
-    
-    .card-header h3{
-    color: white;
-    text-align: center;
-    }
-    
-    #mainbtn{
-    color: black;
-    background-color: #1249ff;
-    width: 200px;
-    padding: 15px;
-    font-size: medium;
-    }
+#body1 {
+  background-image: url("imgs/bg-swirls.jpg");
+}
 
-    #mainfooter{
-    color: white;
-    }
+.container {
+  position: relative;
+}
+
+.card-body {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.card {
+  height: 370px;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 400px;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.card1 {
+  height: 110px;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 400px;
+  text-align: center;
+  padding-top: 10px;
+}
+
+.card2 {
+  margin: 0 auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  text-align: center;
+  width: 750px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.card-header h3 {
+  color: white;
+  text-align: center;
+}
+
+#mainbtn {
+  color: black;
+  background-color: #1249ff;
+  width: 200px;
+  padding: 15px;
+  font-size: medium;
+}
+
+#mainfooter {
+  color: white;
+}
+
+#rentauth {
+  padding-top: 40;
+}
+
+.prev{
+  padding-left: 10px;
+}

@@ -1,14 +1,20 @@
-{% extends "base.html" %}
-
-
-{% block content %}
-    <h1>THIS IS MEDIA</h1>
-    <ul id="media-list">
+{% extends "base.html" %} {% block content %}
+<body id="body1">
+  <div class="card2 bg-dark text-light">
+    <div class="card-body2">
+      <h2 style="text-decoration: underline">Media</h2>
+      <ul id="media-list">
         {% for blob in blob_list %}
         <li>
-            {{ blob.metadata['title'] }} by {{ blob.metadata['author'] }} [Available Copies: {{ blob.metadata['copies'] }}]
-            <button type="button"><a href="/rental_auth/{{ blob.container }}/{{ blob.name }}">Rent</a></button>
+          {{ blob.metadata['title'] }} by {{ blob.metadata['author'] }}
+          [Available Copies: {{ blob.metadata['copies'] }}]
+          <button type="button" class="btn-primary">
+            <a href="/rental_auth/{{ blob.container }}/{{ blob.name }}">Rent</a>
+          </button>
         </li>
         {% endfor %}
-    </ul>
+      </ul>
+    </div>
+  </div>
+</body>
 {% endblock %}
