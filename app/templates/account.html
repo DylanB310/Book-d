@@ -1,15 +1,22 @@
-{% extends "base.html" %}
-
-{% block content %}
-    <h1>{{ user.get("name") }}'s Profile</h1>
-
-    <h1>My rentals</h1>
-    <ul>
+{% extends "base.html" %} {% block content %}
+<body id="body1">
+  <div class="card2 bg-dark text-light">
+    <div class="card-body2">
+      <h1>{{ user.get("name") }}'s Profile</h1>
+      <hr>
+      <h1 style="text-decoration: underline;">My rentals</h1>
+      <ul style="padding-top: 10px;">
         {% for rental in myRentals %}
         <li>
-            {{ rental.metadata['title'] }}
-            <button type="button"><a href="/rentals/{{ rental.container }}/{{ rental.name }}">View</a></button>
+          {{ rental.metadata['title'] }}
+          <button type="button" class="btn-primary">
+            <a href="/rentals/{{ rental.container }}/{{ rental.name }}">View</a>
+          </button>
         </li>
         {% endfor %}
-    </ul>
+      </ul>
+    </div>
+  </div>
+</body>
+
 {% endblock %}
