@@ -26,8 +26,9 @@ class Media(db.Model):
     title = db.Column(db.String(256), nullable=False)
     author = db.Column(db.String(128), nullable=True)
     category = db.Column(db.String(128), nullable=True)
-    professor = db.Column(db.String(64), nullable=True)
-    department = db.Column(db.String(64), nullable=True)
+    prof_id = db.Column(db.Integer, db.ForeignKey('professors.prof_id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.course_id'), nullable=False)
+    dept_id = db.Column(db.Integer, db.ForeignKey('departments.dept_id'), nullable=False)
     rentals = db.relationship('Rentals', backref='media', lazy=True)
     reservations = db.relationship('Reservations', backref='media', lazy=True)
 
@@ -57,3 +58,40 @@ class Reservations(db.Model):
 
     def __repr__(self):
         return self.res_id
+
+class Departments(db.Model):
+    __tablename__ = 'departments'
+    # attr
+    dept_id = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
+    dept_name = db.Column(db.String(128), nullable=False)
+    teachers = db.relationship('Professors', backref='departments', lazy=True)
+    courses = db.relationship('Courses', backref='departments', lazy=True)
+    media = db.relationship('Media', backref='departments', lazy=True)
+
+    def __repr__(self):
+        return self.dept_id
+
+class Professors(db.Model):
+    __tablename__ = 'professors'
+    # attr
+    prof_id = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
+    fname = db.Column(db.String(64))
+    lname = db.Column(db.String(64))
+    dept_id = db.Column(db.Integer, db.ForeignKey('departments.dept_id'), nullable=False)
+    courses = db.relationship('Courses', backref='professors', lazy=True)
+    media = db.relationship('Media', backref='professors', lazy=True)
+
+    def __repr__(self) -> str:
+        return self.prof_id
+
+class Courses(db.Model):
+    __tablename__ = 'courses'
+    # attr
+    course_id = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
+    course_name = db.Column(db.String(128))
+    dept_id = db.Column(db.Integer, db.ForeignKey('departments.dept_id'), nullable=False)
+    prof_id = db.Column(db.Integer, db.ForeignKey('professors.prof_id'), nullable=False)
+    media = db.relationship('Media', backref='courses', lazy=True)
+
+    def __repr__(self) -> str:
+        return self.course_id

@@ -8,35 +8,39 @@
         <ul>
             <li>
                 {{ form.copies.label }}
-                {{ form.copies(size=30) }}
+                {{ form.copies(size=1) }}
             </li>
             <li>
                 {{ form.title.label }}
-                {{ form.title(size=30) }}
+                {{ form.title }}
             </li>
             <li>
                 {{ form.author.label }}
-                {{ form.author(size=30) }}
+                {{ form.author }}
             </li>
             <li>
                 {{ form.category.label }}
-                {{ form.category(size=30) }}
+                {{ form.category }}
             </li>
             <li>
-                {{ form.professor.label }}
-                {{ form.professor(size=30) }}
+                <label>Department:</label>
+                {{ form.department }}
             </li>
             <li>
-                {{ form.department.label }}
-                {{ form.department(size=30) }}
+                <label>Professor:</label>
+                {{ form.professor }}
+            </li>
+            <li>
+                <label>Course:</label>
+                {{ form.course }}
             </li>
             <li>
                 {{ form.media_type.label }}
-                {{ form.media_type(size=30) }}
+                {{ form.media_type }}
             </li>
             <li>
                 {{ form.upload.label }}
-                {{ form.upload(size=30) }}
+                {{ form.upload }}
             </li>
         </ul>
         <button type="submit">{{form.submit()}}</button>
