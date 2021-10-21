@@ -1,19 +1,20 @@
-{% extends "base.html" %} {% block content %}
-<h1>My Rentals</h1>
-<!-- <div>{{ blob_contents }}</div> -->
-<!-- <iframe src="{{ pdf_url }}" frameborder="0" width="90%" height="90%"></iframe> -->
+{% extends "base.html" %} 
+{% block content %}
+<body id="body1">
+  <h1>My Rentals</h1>
 
-<script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+  <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
 
-<div style="padding-top: 40px; padding-left: 10px;">
-  <button id="prev"class="btn-primary">Previous page</button>
+  <div style="padding-top: 40px; padding-left: 10px;">
+    <button id="prev"class="btn-primary">Previous page</button>
 
-  <button id="next" class="btn-primary">Next page</button>
+    <button id="next" class="btn-primary">Next page</button>
 
-  <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
-</div>
+    <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
+  </div>
 
-<canvas oncontextmenu="return false" id="pdf-example"></canvas>
+  <canvas oncontextmenu="return false" id="pdf-example"></canvas>
+</body>
 
 <script type="text/javascript">
   let url = "{{ pdf_url }}";

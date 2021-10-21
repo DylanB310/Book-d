@@ -41,7 +41,7 @@ def index():
                 role='user', blocked=0, subscribed=0)
             db.session.add(temp_user)
             db.session.commit()
-        return render_template('homepage.html', user=session["user"], version=msal.__version__, username=username)
+        return render_template('homepage.html', user=session["user"], version=msal.__version__, username=username, myuser=myuser)
 
 @app.route("/login")
 def login():
@@ -99,7 +99,7 @@ def mediacall():
     if not token:
         return redirect(url_for("login"))
     else:
-        username = session["user"]["preferred_username"].split("@")[0]
+        myuser = db.session.query(Users).filter_by(email=session["user"]["preferred_username"]).first()
 
         blob_list = update_media()
         my_blob_props = []
@@ -108,7 +108,7 @@ def mediacall():
             blob_client = blob_service_client.get_blob_client(container=blob.container, blob=blob)
             props = blob_client.get_blob_properties()
             my_blob_props.append(props)
-        return render_template('media.html', blob_list=my_blob_props, username=username)
+        return render_template('media.html', blob_list=my_blob_props, username=myuser.username, myuser=myuser)
 
 
 '''
@@ -119,7 +119,7 @@ rental also committed to rental log in SQL DB
 '''
 @app.route("/rental_auth/<container>/<blob>")
 def rental_auth(container, blob):
-    username = session["user"]["preferred_username"].split("@")[0]
+    myuser = db.session.query(Users).filter_by(email=session["user"]["preferred_username"]).first()
 
     # establish BSC
     blob_service_client = BlobServiceClient.from_connection_string(app_config.AZURE_STORAGE_CONNECTION_STRING)
@@ -158,11 +158,11 @@ def rental_auth(container, blob):
         db.session.commit()
         success = 1
         flash('Rented successfully')
-        return render_template('rental_auth.html', blob=properties.name, success=success, username=username)
+        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser)
     else:
         success = 0
         flash('Rental failed')
-        return render_template('rental_auth.html', blob=properties.name, success=success, username=username)
+        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser)
 
 
 '''
@@ -175,7 +175,7 @@ def my_rentals(rental_container, blob_name):
     if not token:
         return redirect(url_for("login"))
     else:
-        username = session["user"]["preferred_username"].split("@")[0]
+        myuser = db.session.query(Users).filter_by(email=session["user"]["preferred_username"]).first()
 
         # run update 
         update_media()
@@ -205,7 +205,7 @@ def my_rentals(rental_container, blob_name):
             # TODO RESTRICT DOWNLOAD CAPABILITIES
             url_sas_token = get_url_with_container_sas_token(rental_container, blob_name)
 
-            return render_template('rentals.html', pdf_url=url_sas_token, username=username)
+            return render_template('rentals.html', pdf_url=url_sas_token, username=myuser.username, myuser=myuser)
         else:
             print('problem')
             return redirect(url_for("mediacall"))
@@ -220,7 +220,7 @@ def account():
     if not token:
         return redirect(url_for("login"))
     else:
-        username = session["user"]["preferred_username"].split("@")[0]
+        myuser = db.session.query(Users).filter_by(email=session["user"]["preferred_username"]).first()
 
         # update the blob list
         blob_list = update_media()
@@ -245,7 +245,7 @@ def account():
                 if int(props.metadata['media_id']) == rental.media_id:
                     myRentals.append(props)
 
-        return render_template("account.html", username=username, user=session["user"], myRentals=myRentals)
+        return render_template("account.html", username=myuser.username, user=session["user"], myRentals=myRentals, myuser=myuser)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_page():
@@ -260,7 +260,7 @@ def admin_page():
         Users.role == 'admin'
     )
     if is_admin:
-        username = session["user"]["preferred_username"].split("@")[0]
+        myuser = db.session.query(Users).filter_by(email=session["user"]["preferred_username"]).first()
         form = AddMediaForm()
         form.department.choices = [(d.dept_id, d.dept_name) for d in Departments.query.order_by('dept_name')]
         form.course.choices = [(c.course_id, c.course_name) for c in Courses.query.order_by('course_name')]
@@ -312,8 +312,8 @@ def admin_page():
 
 
             flash('Media uploaded successfully')
-            return render_template("admin.html", form=form, username=username)
-        return render_template("admin.html", form=form, username=username)
+            return render_template("admin.html", form=form, username=myuser.username, myuser=myuser)
+        return render_template("admin.html", form=form, username=myuser.username, myuser=myuser)
     else:
         flash('You are not an admin.')
         return redirect(url_for("mediacall"))
