@@ -4,7 +4,7 @@ from azure.storage.blob._shared.models import ResourceTypes
 from werkzeug.utils import redirect
 from app import app, db
 from flask import render_template, url_for, request, session, flash, redirect
-from app.models import Users, Rentals, Media
+from app.models import Users, Rentals, Media, Departments, Professors, Courses
 from app.forms import AddMediaForm
 import msal
 import logging
@@ -262,8 +262,11 @@ def admin_page():
     if is_admin:
         username = session["user"]["preferred_username"].split("@")[0]
         form = AddMediaForm()
-
-        if form.validate_on_submit():
+        form.department.choices = [(d.dept_id, d.dept_name) for d in Departments.query.order_by('dept_name')]
+        form.course.choices = [(c.course_id, c.course_name) for c in Courses.query.order_by('course_name')]
+        form.professor.choices = [(p.prof_id, (p.fname +' '+ p.lname)) for p in Professors.query.order_by('lname')]
+        if request.method == 'POST' and form.validate_on_submit():
+            print("validated")
             # check if exist by cross-ref sql db
             check_media = db.session.query(Media).filter(Media.title==form.title.data).first()
             if check_media:
@@ -288,8 +291,9 @@ def admin_page():
                 title = form.title.data,
                 author = form.author.data,
                 category = form.category.data,
-                professor = form.professor.data,
-                department = form.department.data
+                prof_id = form.professor.data,
+                course_id = form.course.data,
+                dept_id = form.department.data
             )
             db.session.add(temp_media)
             db.session.commit()
