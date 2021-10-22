@@ -64,8 +64,13 @@
         {% endwith %}
     </div>
     <div id="content">
-        {% block content%}
+        {% block content %}
         {% endblock %}
     </div>
 </body>
+<footer>
+    {% block footer %}
+        <p style='position: absolute; bottom: 0px; width: 100%; left: 25vw; z-index: 1;'>Book'd Copyright, Trademark, All Rights Reserved SCSU, Int'l LLC, Incorporated 2021<p>
+    {% endblock %}
+</footer>
 </html>
