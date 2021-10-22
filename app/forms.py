@@ -15,5 +15,7 @@ class AddMediaForm(FlaskForm):
     professor = SelectField('Professor', choices=[])
     course = SelectField('Course:',choices=[])
     media_type = RadioField('Media Type', choices = [('P','Print'),('A','Audio'),('V','Video')], validators=[DataRequired()])
-    upload = FileField('Media file', validators=[FileRequired()])
+    upload = FileField('Media file', validators=[
+            FileAllowed(['pdf', 'mp4', 'webm', 'ogg', 'mpeg', 'wav'], 'Supports Video, PDF, Audio.'),
+            FileRequired()])
     submit = SubmitField('Add Media')

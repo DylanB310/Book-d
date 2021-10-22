@@ -108,11 +108,13 @@
     });
   </script>
 <!--  -->
-{% elif props.metadata['media_type'] == A %}
+{% elif props.metadata['media_type'] == 'A' %}
   <body id="body1">
     <div class="card2 bg-dark text-light">
       <div class="card-body2">
-        <h2>Yo its audio</h2>
+        <audio controls controlsList="nodownload" style="position: relative; top: 100px; left: 25vw;">
+          <source src="{{ media_url }}" type="audio/mpeg">
+        </audio>
       </div>
     </div>
   </body>
@@ -123,7 +125,7 @@
         <script type="text/javascript">
           console.log("{{media_url}}");
         </script>
-        <video>
+        <video oncontextmenu="return false" controls controlsList="nodownload">
           <source src="{{media_url}}" type="video/mp4">
         </video>
       </div>

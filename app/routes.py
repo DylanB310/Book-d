@@ -153,11 +153,11 @@ def rental_auth(container, blob):
         db.session.commit()
         success = 1
         flash('Rented successfully')
-        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser)
+        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser), {"Refresh": "3; url="+url_for('account')}
     else:
         success = 0
         flash('Rental failed')
-        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser)
+        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser), {f"Refresh": "3; url="+url_for('mediacall')}
 
 
 '''
