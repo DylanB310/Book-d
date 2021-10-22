@@ -13,13 +13,15 @@
     <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
   </div>
 
+  <input id="inputPgNum" type="number">Number</input>
+  <button id="gotoPage" class="btn-primary">GotoPage</button>
+
   <canvas oncontextmenu="return false" id="pdf-example"></canvas>
 </body>
 
 <script type="text/javascript">
   let url = "{{ pdf_url }}";
   url = url.split("&amp;").join("&");
-  console.log(url);
   const pdfjsLib = window["pdfjs-dist/build/pdf"];
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =

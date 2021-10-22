@@ -117,7 +117,7 @@ function: checks copies for availability then deduct copies if available
 allows users to rent copies, copies are stored in metadata
 rental also committed to rental log in SQL DB
 '''
-@app.route("/rental_auth/<container>/<blob>")
+@app.route("/rental_auth/<container>/<blob>", methods=['GET', 'POST'])
 def rental_auth(container, blob):
     myuser = db.session.query(Users).filter_by(email=session["user"]["preferred_username"]).first()
 
