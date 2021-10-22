@@ -1,106 +1,136 @@
 {% extends "base.html" %} 
 {% block content %}
-<body id="body1">
-  <h1>My Rentals</h1>
+<!-- HANDLING FOR MEDIA TYPES -->
+{% if props.metadata['media_type'] == 'P' %}
+  <body id="body1">
+    <h1>My Rental</h1>
 
-  <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
 
-  <div style="padding-top: 40px; padding-left: 10px;">
-    <button id="prev"class="btn-primary">Previous page</button>
+    <div style="padding-top: 40px; padding-left: 10px;">
+      <button id="prev"class="btn-primary">Previous page</button>
 
-    <button id="next" class="btn-primary">Next page</button>
+      <button id="next" class="btn-primary">Next page</button>
 
-    <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
-  </div>
+      <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
+    </div>
 
-  <canvas oncontextmenu="return false" id="pdf-example"></canvas>
-</body>
+    <canvas oncontextmenu="return false" id="pdf-example"></canvas>
+  </body>
 
-<script type="text/javascript">
-  let url = "{{ pdf_url }}";
-  url = url.split("&amp;").join("&");
-  const pdfjsLib = window["pdfjs-dist/build/pdf"];
+  <!-- SCRIPT FOR HANDLING PDFJS  -->
+  <!-- TODO: ADD GOTO PAGE FUNCTION -->
+  <script type="text/javascript">
+    let url = "{{ media_url }}";
+    url = url.split("&amp;").join("&");
+    const pdfjsLib = window["pdfjs-dist/build/pdf"];
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "//mozilla.github.io/pdf.js/build/pdf.worker.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "//mozilla.github.io/pdf.js/build/pdf.worker.js";
 
-  let pdfDoc = null,
-    pageNum = 1,
-    pageRendering = false,
-    pageNumPending = null,
-    scale = 1.5,
-    canvas = document.getElementById("pdf-example"),
-    ctx = canvas.getContext("2d");
+    let pdfDoc = null,
+      pageNum = 1,
+      pageRendering = false,
+      pageNumPending = null,
+      scale = 1.5,
+      canvas = document.getElementById("pdf-example"),
+      ctx = canvas.getContext("2d");
 
-  function renderPage(num) {
-    pageRendering = true;
+    function renderPage(num) {
+      pageRendering = true;
 
-    pdfDoc.getPage(num).then(function (page) {
-      let viewport = page.getViewport({ scale: scale });
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+      pdfDoc.getPage(num).then(function (page) {
+        let viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
-      let renderContext = {
-        canvasContext: ctx,
-        viewport: viewport,
-      };
-      let renderTask = page.render(renderContext);
+        let renderContext = {
+          canvasContext: ctx,
+          viewport: viewport,
+        };
+        let renderTask = page.render(renderContext);
 
-      renderTask.promise.then(function () {
-        pageRendering = false;
-        if (pageNumPending !== null) {
-          renderPage(pageNumPending);
-          pageNumPending = null;
-        }
+        renderTask.promise.then(function () {
+          pageRendering = false;
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        });
       });
+
+      document.getElementById("page_num").textContent = num;
+    }
+
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    /**
+     * show previous page
+     */
+    function onPrevPage() {
+      if (pageNum > 1) {
+        pageNum--;
+        queueRenderPage(pageNum);
+      }
+    }
+
+    document.getElementById("prev").addEventListener("click", onPrevPage);
+
+    /**
+     * show next page
+     */
+    function onNextPage() {
+      if (pageNum < pdfDoc.numPages) {
+        pageNum++;
+        queueRenderPage(pageNum);
+      }
+    }
+
+    document.getElementById("next").addEventListener("click", onNextPage);
+
+    /**
+     * PDF async "download".
+     */
+    pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
+      //Set loaded PDF to main pdfDoc variable
+      pdfDoc = pdfDoc_;
+
+      //Show number of pages in document
+      document.getElementById("page_count").textContent = pdfDoc.numPages;
+
+      renderPage(pageNum);
     });
+  </script>
+<!--  -->
+{% elif props.metadata['media_type'] == 'A' %}
+  <body id="body1">
+    <div class="card2 bg-dark text-light">
+      <div class="card-body2">
+        <audio controls controlsList="nodownload" style="position: relative; top: 100px; left: 25vw;">
+          <source src="{{ media_url }}" type="audio/mpeg">
+        </audio>
+      </div>
+    </div>
+  </body>
+{% elif props.metadata['media_type'] == 'V' %}
+  <body id="body1" style="display: inline list-item;">
+    <div class="card2 bg-dark text-light">
+      <div class="card-body2">
+        <script type="text/javascript">
+          console.log("{{media_url}}");
+        </script>
+        <video oncontextmenu="return false" controls controlsList="nodownload">
+          <source src="{{media_url}}" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </body>
+{% endif %}
 
-    document.getElementById("page_num").textContent = num;
-  }
-
-  function queueRenderPage(num) {
-    if (pageRendering) {
-      pageNumPending = num;
-    } else {
-      renderPage(num);
-    }
-  }
-
-  /**
-   * show previous page
-   */
-  function onPrevPage() {
-    if (pageNum > 1) {
-      pageNum--;
-      queueRenderPage(pageNum);
-    }
-  }
-
-  document.getElementById("prev").addEventListener("click", onPrevPage);
-
-  /**
-   * show next page
-   */
-  function onNextPage() {
-    if (pageNum < pdfDoc.numPages) {
-      pageNum++;
-      queueRenderPage(pageNum);
-    }
-  }
-
-  document.getElementById("next").addEventListener("click", onNextPage);
-
-  /**
-   * PDF async "download".
-   */
-  pdfjsLib.getDocument(url).promise.then(function (pdfDoc_) {
-    //Set loaded PDF to main pdfDoc variable
-    pdfDoc = pdfDoc_;
-
-    //Show number of pages in document
-    document.getElementById("page_count").textContent = pdfDoc.numPages;
-
-    renderPage(pageNum);
-  });
-</script>
 {% endblock %}

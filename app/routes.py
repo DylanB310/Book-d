@@ -1,17 +1,12 @@
-from time import gmtime
-from azure.storage import blob
-from azure.storage.blob._shared.models import ResourceTypes
 from werkzeug.utils import redirect
 from app import app, db
 from flask import render_template, url_for, request, session, flash, redirect
 from app.models import Users, Rentals, Media, Departments, Professors, Courses
 from app.forms import AddMediaForm
 import msal
-import logging
-import copy
 import os, uuid
-from datetime import date, datetime, timedelta
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__, BlobPrefix, generate_container_sas, ContainerSasPermissions
+from datetime import datetime, timedelta
+from azure.storage.blob import BlobServiceClient, __version__, generate_container_sas, ContainerSasPermissions
 
 import requests
 from app import app_config
@@ -158,11 +153,11 @@ def rental_auth(container, blob):
         db.session.commit()
         success = 1
         flash('Rented successfully')
-        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser)
+        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser), {"Refresh": "3; url="+url_for('account')}
     else:
         success = 0
         flash('Rental failed')
-        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser)
+        return render_template('rental_auth.html', blob=properties.name, success=success, username=myuser.username, myuser=myuser), {f"Refresh": "3; url="+url_for('mediacall')}
 
 
 '''
@@ -191,8 +186,6 @@ def my_rentals(rental_container, blob_name):
 
         # client for specific blob handling (the media we select on results page)
         blob_client = blob_service_client.get_blob_client(container=rental_container, blob=blob_name)
-
-        # setting metadata for copies available
         props = blob_client.get_blob_properties()
 
         # restrict only those who have it rented
@@ -202,12 +195,29 @@ def my_rentals(rental_container, blob_name):
 
         if temp_rentals:
             # generate url token to render pdf
-            # TODO RESTRICT DOWNLOAD CAPABILITIES
             url_sas_token = get_url_with_container_sas_token(rental_container, blob_name)
 
-            return render_template('rentals.html', pdf_url=url_sas_token, username=myuser.username, myuser=myuser)
+            # switch for media handling
+            if props.metadata['media_type'] == 'P':
+                return render_template('rentals.html', 
+                    props=props, 
+                    media_url=url_sas_token, 
+                    username=myuser.username, 
+                    myuser=myuser)
+            elif props.metadata['media_type'] == 'A':
+                return render_template('rentals.html', 
+                    props=props, 
+                    media_url=url_sas_token, 
+                    username=myuser.username, 
+                    myuser=myuser)
+            elif props.metadata['media_type'] == 'V':
+                return render_template('rentals.html', 
+                    props=props, 
+                    media_url=url_sas_token, 
+                    username=myuser.username, 
+                    myuser=myuser)
         else:
-            print('problem')
+            flash('Media not currently rented.')
             return redirect(url_for("mediacall"))
 
 '''
@@ -266,7 +276,6 @@ def admin_page():
         form.course.choices = [(c.course_id, c.course_name) for c in Courses.query.order_by('course_name')]
         form.professor.choices = [(p.prof_id, (p.fname +' '+ p.lname)) for p in Professors.query.order_by('lname')]
         if request.method == 'POST' and form.validate_on_submit():
-            print("validated")
             # check if exist by cross-ref sql db
             check_media = db.session.query(Media).filter(Media.title==form.title.data).first()
             if check_media:
@@ -312,7 +321,7 @@ def admin_page():
 
 
             flash('Media uploaded successfully')
-            return render_template("admin.html", form=form, username=myuser.username, myuser=myuser)
+            return redirect(url_for("admin_page"))
         return render_template("admin.html", form=form, username=myuser.username, myuser=myuser)
     else:
         flash('You are not an admin.')
