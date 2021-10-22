@@ -41,7 +41,10 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                           <a class="dropdown-item" href="/account">Profile</a>
                           <div class="dropdown-divider"></div>
-                          <a class="dropdown-item" href="/logout">Logout</a>
+                          {% if myuser.role == 'admin' %}
+                            <a class="dropdown-item" href="/admin">Admin</a>
+                          {% endif %}
+                            <a class="dropdown-item" href="/logout">Logout</a>
                         </div>
                     </li>
                 </ul>

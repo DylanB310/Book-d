@@ -1,50 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="form">
-    <form action="" method='post' enctype="multipart/form-data" class='form-container' novalidate>
-        <h2>Add Media</h2>
-        {{ form.hidden_tag() }}
-        <ul>
-            <li>
-                {{ form.copies.label }}
-                {{ form.copies(size=1) }}
-            </li>
-            <li>
-                {{ form.title.label }}
-                {{ form.title }}
-            </li>
-            <li>
-                {{ form.author.label }}
-                {{ form.author }}
-            </li>
-            <li>
-                {{ form.category.label }}
-                {{ form.category }}
-            </li>
-            <li>
-                <label>Department:</label>
-                {{ form.department }}
-            </li>
-            <li>
-                <label>Professor:</label>
-                {{ form.professor }}
-            </li>
-            <li>
-                <label>Course:</label>
-                {{ form.course }}
-            </li>
-            <li>
-                {{ form.media_type.label }}
-                {{ form.media_type }}
-            </li>
-            <li>
-                {{ form.upload.label }}
-                {{ form.upload }}
-            </li>
-        </ul>
-        <button type="submit">{{form.submit()}}</button>
-    </form>
-</div>
-
+<body id="body1">
+    <div class="card2 bg-dark text-light">
+        <div class="card-body2">
+            <div class="form">
+                <form action="" method='post' enctype="multipart/form-data" class='form-container' novalidate>
+                    <h2>Add Media</h2>
+                    {{ form.hidden_tag() }}
+                    <ul>
+                        <li>
+                            {{ form.copies.label }}
+                            {{ form.copies(size=1) }}
+                        </li>
+                        <li>
+                            {{ form.title.label }}
+                            {{ form.title }}
+                        </li>
+                        <li>
+                            {{ form.author.label }}
+                            {{ form.author }}
+                        </li>
+                        <li>
+                            {{ form.category.label }}
+                            {{ form.category }}
+                        </li>
+                        <li>
+                            <label>Department:</label>
+                            {{ form.department }}
+                        </li>
+                        <li>
+                            <label>Professor:</label>
+                            {{ form.professor }}
+                        </li>
+                        <li>
+                            <label>Course:</label>
+                            {{ form.course }}
+                        </li>
+                        <li>
+                            {{ form.media_type.label }}
+                            {{ form.media_type }}
+                        </li>
+                        <li>
+                            {{ form.upload.label }}
+                            {{ form.upload }}
+                        </li>
+                    </ul>
+                    <button type="submit">{{form.submit()}}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
 {% endblock %}
